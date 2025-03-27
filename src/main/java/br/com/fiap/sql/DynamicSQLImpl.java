@@ -1,15 +1,13 @@
-package br.com.fiap.dao;
+package br.com.fiap.sql;
 
-import br.com.fiap.annotation.Column;
-import br.com.fiap.annotation.Table;
-import jakarta.persistence.Id;
+import jakarta.persistence.*;
 
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 
-public class JpaDAOImpl implements IJpaDAO {
+public class DynamicSQLImpl implements IDynamicSQL {
 
-    public void create(Object obj) {
+    public String createSQLQuery(Object obj) {
         Table annotation = obj.getClass().getAnnotation(Table.class);
         StringBuilder sql = new StringBuilder("INSERT INTO " + annotation.name() + " (");
 
@@ -18,14 +16,12 @@ public class JpaDAOImpl implements IJpaDAO {
 
         ArrayList<Object> values = new ArrayList<>();
 
-        int index = 1;
         Field[] attributes = obj.getClass().getDeclaredFields();
         for (Field f : attributes) {
             if (!f.isAnnotationPresent(Column.class)) continue;
             Column annotationCol = f.getAnnotation(Column.class);
             columnNames.add(annotationCol.name());
-            bindString.add(":" + index);
-            index++;
+            bindString.add("?");
 
             f.setAccessible(true);
             try {
@@ -42,15 +38,15 @@ public class JpaDAOImpl implements IJpaDAO {
         sql.append(");");
 
         System.out.println("Insert SQL: " + sql);
+        return sql.toString();
     }
-
-    public void readALl(Object obj) {
+    public String readALlSQLQuery(Object obj) {
         Table annotation = obj.getClass().getAnnotation(Table.class);
         String sql = "SELECT * FROM " + annotation.name() + ";";
         System.out.println("Select All: " + sql);
+        return sql;
     }
-
-    public void read(Object obj) {
+    public String readSQLQuery(Object obj) {
         Table annotation = obj.getClass().getAnnotation(Table.class);
         StringBuilder sql = new StringBuilder("SELECT * FROM " + annotation.name() + " WHERE ");
 
@@ -69,24 +65,22 @@ public class JpaDAOImpl implements IJpaDAO {
             }
         }
 
-        sql.append(" = :1;");
+        sql.append(" = ?;");
         System.out.println("Select ID: " + sql);
+        return sql.toString();
     }
-
-    public void update(Object obj) {
+    public String updateSQLQuery(Object obj) {
         Table annotation = obj.getClass().getAnnotation(Table.class);
         StringBuilder sql = new StringBuilder("UPDATE " + annotation.name() + " SET ");
 
         ArrayList<String> columnNames = new ArrayList<>();
         ArrayList<Object> values = new ArrayList<>();
 
-        int index = 1;
         Field[] attributes = obj.getClass().getDeclaredFields();
         for (Field f : attributes) {
             if (!f.isAnnotationPresent(Column.class)) continue;
             Column annotationCol = f.getAnnotation(Column.class);
-            columnNames.add(annotationCol.name() + " = :" + index);
-            index++;
+            columnNames.add(annotationCol.name() + " = ?");
 
             f.setAccessible(true);
             try {
@@ -114,11 +108,11 @@ public class JpaDAOImpl implements IJpaDAO {
             }
         }
 
-        sql.append(" = :1;");
+        sql.append(" = ?;");
         System.out.println("Update SQL: " + sql);
+        return sql.toString();
     }
-
-    public void delete(Object obj) {
+    public String deleteSQLQuery(Object obj) {
         Table annotation = obj.getClass().getAnnotation(Table.class);
         StringBuilder sql = new StringBuilder("DELETE FROM " + annotation.name() + " WHERE ");
 
@@ -137,7 +131,19 @@ public class JpaDAOImpl implements IJpaDAO {
             }
         }
 
-        sql.append(" = :1;");
+        sql.append(" = ?;");
         System.out.println("Delete SQL: " + sql);
+        return sql.toString();
     }
+    public ArrayList<String> getSQLQueries(Object obj) {
+        ArrayList<String> queries = new ArrayList<>();
+        queries.add(createSQLQuery(obj));
+        queries.add(readALlSQLQuery(obj));
+        queries.add(readSQLQuery(obj));
+        queries.add(updateSQLQuery(obj));
+        queries.add(deleteSQLQuery(obj));
+
+        return queries;
+    }
+
 }

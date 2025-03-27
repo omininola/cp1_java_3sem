@@ -10,7 +10,4 @@ import java.lang.annotation.Target;
 public @interface Column {
 
     String name();
-    int size() default 0;
-    boolean required() default false;
-
 }

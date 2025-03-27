@@ -1,11 +1,13 @@
 package br.com.fiap.view;
 
-import br.com.fiap.dao.JpaDAOImpl;
+import br.com.fiap.dao.EmployeeDAOImpl;
+import br.com.fiap.sql.DynamicSQLImpl;
 import br.com.fiap.entity.Employee;
-
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityManagerFactory;
 import jakarta.persistence.Persistence;
+
+import java.util.ArrayList;
 
 public class Test {
     public static void main(String[] args) {
@@ -14,16 +16,30 @@ public class Test {
         e.setWorkedHours(10);
         e.setValuePerHour(10);
 
-        JpaDAOImpl jpaDAO = new JpaDAOImpl();
-        jpaDAO.create(e);
-        jpaDAO.readALl(e);
-        jpaDAO.read(e);
-        jpaDAO.update(e);
-        jpaDAO.delete(e);
+        DynamicSQLImpl jpaDAO = new DynamicSQLImpl();
+        ArrayList<String> sqlQueries = jpaDAO.getSQLQueries(e);
 
         EntityManagerFactory emf = Persistence.createEntityManagerFactory("CHECKPOINT");
         EntityManager em = emf.createEntityManager();
 
-        em.persist(e);
+        EmployeeDAOImpl employeeDAO = new EmployeeDAOImpl(em);
+
+        employeeDAO.create(e);
+
+        employeeDAO.commit();
+
+        System.out.println(employeeDAO.read(e.getId()));
+
+        e.setWorkedHours(20);
+        employeeDAO.update(e);
+
+        employeeDAO.commit();
+
+        System.out.println(employeeDAO.read(e.getId()));
+        employeeDAO.delete(e.getId());
+
+        employeeDAO.commit();
+
+        System.out.println(employeeDAO.read(e.getId()));
     }
 }

@@ -1,45 +1,122 @@
 package br.com.fiap;
 
+import br.com.fiap.dao.EmployeeDAOImpl;
 import br.com.fiap.entity.Employee;
-import br.com.fiap.entity.InternEmployee;
-import br.com.fiap.entity.SeniorEmployee;
-import br.com.fiap.entity.ManagerEmployee;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityManagerFactory;
 import jakarta.persistence.Persistence;
 
-public class Main {
+import java.util.ArrayList;
+import java.util.Scanner;
 
+public class Main {
     public static void main(String[] args) {
 
-        Employee employee = new Employee();
-        employee.setName("João");
-        employee.setWorkedHours(160);
-        employee.setValuePerHour(25);
-        System.out.println("Employee Salary: " + employee.calcSalary());
-        System.out.println(employee);
+        Scanner scan = new Scanner(System.in);
 
-        SeniorEmployee seniorEmployee = new SeniorEmployee();
-        seniorEmployee.setName("Maria");
-        seniorEmployee.setWorkedHours(200);
-        seniorEmployee.setValuePerHour(30);
-        System.out.println("Senior Employee Salary: " + seniorEmployee.calcSalary());
-        System.out.println(seniorEmployee);
+        StringBuilder menu = new StringBuilder();
+        menu.append("[1] - Criar novo funcionário").append("\n");
+        menu.append("[2] - Buscar todos os funcionários").append("\n");
+        menu.append("[3] - Buscar funcionário pelo ID").append("\n");
+        menu.append("[4] - Atualizar funcionário").append("\n");
+        menu.append("[5] - Deletar funcionário").append("\n");
+        menu.append("[6] - Fechar programa").append("\n");
+        menu.append("\n");
+        menu.append("Digite a opção desejada: ");
 
-        InternEmployee internEmployee = new InternEmployee();
-        internEmployee.setName("Ana");
-        internEmployee.setWorkedHours(120);
-        internEmployee.setValuePerHour(15);
-        internEmployee.setTaxDiscount(10);
-        System.out.println("Intern Employee Salary: " + internEmployee.calcSalary());
-        System.out.println(internEmployee);
+        EntityManagerFactory emf = Persistence.createEntityManagerFactory("CHECKPOINT");
+        EntityManager em = emf.createEntityManager();
 
-        ManagerEmployee managerEmployee = new ManagerEmployee();
-        managerEmployee.setName("Pedro");
-        managerEmployee.setWorkedHours(220);
-        managerEmployee.setValuePerHour(40);
-        managerEmployee.setManagerBonus(500);
-        System.out.println("Salário do funcionário gerente: " + managerEmployee.calcSalary());
-        System.out.println(managerEmployee);
+        EmployeeDAOImpl employeeDAO = new EmployeeDAOImpl(em);
+
+        boolean isRunning = true;
+        while (isRunning) {
+            System.out.println(menu);
+            int scanValue = scan.nextInt();
+
+            switch (scanValue) {
+                case 1:
+                    System.out.println("Digite o nome do funcionário: ");
+                    String nameCreate = scan.next() + scan.nextLine();
+
+                    System.out.println("Digite as horas que o funcionário trabalhou: ");
+                    int workedHoursCreate = scan.hasNextInt() ? scan.nextInt() : 0;
+
+                    System.out.println("Digite o valor por hora trabalhada (R$): ");
+                    double valuePerHourCreate = scan.hasNextDouble() ? scan.nextDouble() : 0;
+
+                    Employee empCreate = new Employee();
+                    empCreate.setName(nameCreate);
+                    empCreate.setWorkedHours(workedHoursCreate);
+                    empCreate.setValuePerHour(valuePerHourCreate);
+
+                    System.out.println(empCreate);
+                    employeeDAO.create(empCreate);
+                    employeeDAO.commit();
+
+                    break;
+
+                case 2:
+                    System.out.println("Buscando todos os funcionários...");
+
+                    ArrayList<Employee> employees = employeeDAO.readAll();
+                    for (Employee empReadAll : employees) {
+                        System.out.println(empReadAll);
+                    }
+
+                    break;
+
+                case 3:
+                    System.out.println("Digite o ID do funcionário que deseja buscar: ");
+                    long idRead = scan.nextLong();
+                    Employee empRead = employeeDAO.read(idRead);
+                    System.out.println(empRead);
+
+                    break;
+
+                case 4:
+                    System.out.println("Digite o ID do funcionário que deseja atualizar: ");
+                    long idUpdate = scan.nextLong();
+
+                    System.out.println("Digite o novo nome do funcionário: ");
+                    String nameUpdate = scan.next() + scan.nextLine();
+
+                    System.out.println("Digite as novas horas que o funcionário trabalhou: ");
+                    int workedHoursUpdate = scan.nextInt();
+
+                    System.out.println("Digite o novo valor por hora trabalhada (R$): ");
+                    double valuePerHourUpdate = scan.nextDouble();
+
+                    Employee empUpdate = new Employee();
+                    empUpdate.setId(idUpdate);
+                    empUpdate.setName(nameUpdate);
+                    empUpdate.setWorkedHours(workedHoursUpdate);
+                    empUpdate.setValuePerHour(valuePerHourUpdate);
+
+                    employeeDAO.update(empUpdate);
+                    employeeDAO.commit();
+
+                    break;
+
+                case 5:
+                    System.out.println("Digite o ID do funcionário que deseja deletar: ");
+                    long idDelete = scan.nextLong();
+
+                    employeeDAO.delete(idDelete);
+                    employeeDAO.commit();
+
+                    break;
+
+                case 6:
+                    System.out.println("Obrigado por utilizar nossos serviços!");
+                    System.out.println("Até logo");
+
+                    isRunning = false;
+                    break;
+
+                default:
+                    System.out.println("Opção inválida! Por favor, tente novamente!");
+            }
+        }
     }
 }
